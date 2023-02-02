@@ -4,6 +4,7 @@ import { TVideoDB } from './types'
 //import { db } from './database/BaseDatabase'
 import { VideoDatabase } from './database/VideoDatabase'
 import { Video } from './model/Video'
+import { VideosController } from './controller/VideosController'
 
 
 const app = express()
@@ -36,6 +37,16 @@ app.get("/ping", async (req: Request, res: Response) => {
 app.get("/videos", async (req: Request, res: Response) => {
     try {
         const q = req.query.q as string | undefined
+
+        // let videosDB //underfined
+
+        // if (q) {
+        //     const result: TVideoDB[] = await db("videos").where("title", "LIKE", `%${q}%`)
+        //     videosDB = result
+        // } else {
+        //     const result: TVideoDB[] = await db("videos")
+        //     videosDB = result //dado cru
+        // }
 
         //vamos pegar as informações vindas do videosBD e INSTANCIA-LA em um objeto da classe Video
         const videoDatabase = new VideoDatabase
@@ -138,47 +149,61 @@ app.post("/videos", async (req: Request, res: Response) => {
 // put -> atualizar - editar
 app.put("/videos/:id", async (req: Request, res: Response) => {
     try {
-    const id: string = req.params.id
-    const { title, duration } = req.body
 
-    const videoDatabase = new VideoDatabase()
-    const videoDB = await videoDatabase.findVideoById(id)
+        const idVideo = req.params.id
+        const { id, title, duration } = req.body
+        const videoBaseDatabase = new VideoDatabase()
 
-    if (!videoDB) {
-        res.status(404)
-        throw new Error("Video não encontrado")
+        if (!idVideo) {
+            res.status(400)
+            throw new Error("Favor informar um id válido");
+        }
+        const video = await videoBaseDatabase.findVideoById(idVideo)
+
+        if (!video) {
+            res.status(404)
+            throw new Error("Video não encontrado");
+        }
+        if (typeof duration !== "undefined") {
+            if (isNaN(duration)) {
+                res.status(400)
+                throw new Error("Duração é um número");
+
+            }
+        }
+        const newVideo = new Video(
+            id || video.id,
+            title || video.title,
+            duration || video.duration,
+            new Date(Date.now()).toUTCString()
+        )
+        const newVideoDB: TVideoDB = {
+            id: newVideo.getId(),
+            title: newVideo.getTitulo(),
+            duration: newVideo.getDuracao(),
+            created_at: newVideo.getCreated_at()
+
+        }
+        await videoBaseDatabase.updateVideo(newVideoDB, video.id)
+        res.status(200).send({
+            messsage: "Video editado com sucesso",
+            result: newVideo
+        })
+
+    } catch (error) {
+        console.log(error)
+
+        if (req.statusCode === 200) {
+            res.status(500)
+        }
+
+        if (error instanceof Error) {
+            res.send(error.message)
+        } else {
+            res.send("Erro inesperado")
+        }
     }
 
-    const video = new Video(
-        id,
-        title,
-        duration,
-        new Date().toISOString()
-    )
-
-    const videoDBToUpdate: TVideoDB = {
-        id: video.getId(),
-        title: video.getTitulo(),
-        duration: video.getDuracao(),
-        created_at: video.getCreated_at()
-    }
-
-    await videoDatabase.updateVideo(videoDBToUpdate, id)
-
-    res.status(200).send(video)
-} catch (error) {
-    console.log(error)
-
-    if (res.statusCode === 200) {
-        res.statusCode = 500
-    }
-
-    if (error instanceof Error) {
-        res.send(error.message)
-    } else {
-        res.send("Erro inesperado")
-    }
-}
 })
 
 //**********************// */
