@@ -33,7 +33,7 @@ export class Video {
     public getCreated_at(){
         return this.created_at
     }
-    public setPassword(newCreated_at:string):void{
+    public setCreated_at(newCreated_at:string):void{
         this.created_at = newCreated_at
     }
     
