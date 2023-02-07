@@ -4,7 +4,7 @@ import { TVideoDB } from './types'
 //import { db } from './database/BaseDatabase'
 import { VideoDatabase } from './database/VideoDatabase'
 import { Video } from './model/Video'
-import { VideosController } from './controller/VideosController'
+import { VideoController } from './controller/VideoController'
 
 
 const app = express()
@@ -34,13 +34,13 @@ app.get("/ping", async (req: Request, res: Response) => {
     }
 })
 //get videos
-const videoController = new VideosController()
+const videoController = new VideoController()
 
 
 app.get("/videos", videoController.getVideos)
 
-app.post("/videos", videoController.createVideos)
+app.post("/videos", videoController.createVideo)
 
-app.put("/videos/:id", videoController.editVideos)
+app.put("/videos/:id", videoController.editVideo)
   
-app.delete("/videos/:id", videoController.deleteVideos)
+app.delete("/videos/:id", videoController.deleteVideo)
